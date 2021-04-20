@@ -1,28 +1,17 @@
 const Quote = require("../models/quote");
 const Subscription = require("../models/subscription");
+const jwt = require('jsonwebtoken');
 
 // --------------------------------------------------
 //                     SUBSCRIPTIONS
 // --------------------------------------------------
 
-//TODO !!!!
-exports.getQuotesFromUser = (req, res, next) => {
-  Subscription.find({ followedId: req.params.id })
-    .then((subscriptions) => {
-      Quote.find({ userId: [] })
-        .then((quotes) => res.status(200).json(quotes))
-        .catch((error) => res.status(400).json({ error }))
-      res.status(200).json(subscription)
-    })
-    .catch((error) => res.status(400).json({ error }));
-};
-
 // POST
 exports.subscribe = (req, res, next) => {
   delete req.body._id;
-  const subscription = new Subscription({
-    ...req.body,
-  });
+  const subscription = new Subscription(
+    { followerId: getUserId(req.headers.authorization), followedId: req.params.id }
+  );
   subscription
     .save()
     .then(() =>
@@ -33,7 +22,7 @@ exports.subscribe = (req, res, next) => {
 
 // DELETE
 exports.unsubscribe = (req, res, next) => {
-  Subscription.deleteOne({ followerId: req.body.followerId, followedId: req.body.followedId })
+  Subscription.deleteOne({ followerId: getUserId(req.headers.authorization), followedId: req.params.id })
     .then(() =>
       res
         .status(200)
@@ -41,3 +30,8 @@ exports.unsubscribe = (req, res, next) => {
     )
     .catch((error) => res.status(400).json({ error }));
 };
+
+getUserId = (authorization) => {
+  const token = authorization.split(" ");
+  return jwt.decode(token[1]).userId
+}

@@ -9,7 +9,7 @@ const auth = require("../middleware/auth");
 // --------------------------------------------------
 
 // GET
-router.get("/:id", auth, quoteCtrl.getAllQuotesFromUser);
+router.get("/", auth, quoteCtrl.getAllQuotesFromTimeline);
 
 // POST
 router.post("/", auth, quoteCtrl.createQuote);

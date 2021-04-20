@@ -9,13 +9,10 @@ const auth = require("../middleware/auth");
 //                     SUBSCRIPTIONS
 // --------------------------------------------------
 
-//GET
-router.get("/:id", auth, subscriptionCtrl.getQuotesFromUser);
-
 // POST
-router.post("/", auth, subscriptionCtrl.subscribe);
+router.post("/:id", auth, subscriptionCtrl.subscribe);
 
 // DELETE
-router.delete("/", auth, subscriptionCtrl.unsubscribe);
+router.delete("/:id", auth, subscriptionCtrl.unsubscribe);
 
 module.exports = router;

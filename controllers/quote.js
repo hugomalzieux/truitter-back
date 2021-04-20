@@ -1,25 +1,29 @@
 const Quote = require("../models/quote");
 const subscriptionCtrl = require("./subscription");
 const Subscription = require("../models/subscription");
+const jwt = require('jsonwebtoken');
 
 // --------------------------------------------------
 //                     QUOTES
 // --------------------------------------------------
 
-// GET ALL
-exports.getAllQuotesFromUser = (req, res, next) => {
-  Quote.find({ userId: req.params.id })
-    .then((quotes) => res.status(200).json(quotes))
+// GET
+exports.getAllQuotesFromTimeline = (req, res, next) => {
+  Subscription.find({ followerId: getUserId(req.headers.authorization) })
+    .then((subscriptions) => {
+      const subscriptionsIds = subscriptions.map(subscription => subscription.followedId);
+      Quote.find({ userId: { $in: subscriptionsIds } })
+        .sort("-modifiedDate")
+        .then((quotes) => res.status(200).json(quotes))
+        .catch((error) => res.status(400).json({ error }))
+    })
     .catch((error) => res.status(400).json({ error }));
 };
 
 // POST
 exports.createQuote = (req, res, next) => {
   delete req.body._id;
-  const quote = new Quote({
-    ...req.body, creadtedDate: new Date(), modifiedDate: new Date()
-  });
-
+  const quote = new Quote({ text: req.body.text, userId: getUserId(req.headers.authorization) });
   quote
     .save()
     .then(() =>
@@ -30,7 +34,7 @@ exports.createQuote = (req, res, next) => {
 
 // PUT
 exports.updateQuote = (req, res, next) => {
-  Quote.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id, modifiedDate: new Date() })
+  Quote.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id, modifiedDate: Date.now() })
     .then(() =>
       res
         .status(200)
@@ -48,3 +52,8 @@ exports.deleteQuote = (req, res, next) => {
         .json({ message: `this quote has been deleted !` }))
     .catch((error) => res.status(400).json({ error }));
 };
+
+getUserId = (authorization) => {
+  const token = authorization.split(" ");
+  return jwt.decode(token[1]).userId
+}
